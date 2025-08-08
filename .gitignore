@@ -1,0 +1,61 @@
+# Node.js / TypeScript / Web Server .gitignore
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env
+
+# Jest coverage
+coverage/
+
+# VSCode settings
+.vscode/
+
+# Misc
+*.tgz
+*.swp
+*.swo
+
+# Local config
+*.local.js
+*.local.ts
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Mac system files
+.AppleDouble
+.LSOverride
+
+# npm package lock
+# package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# IDE files
+.idea/
+*.iml
+
+# Test output
+/test-results/
+
+# GitHub workflows artifacts
+.github/workflows/*.log
+
+src/debug.ts

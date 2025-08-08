@@ -1,0 +1,88 @@
+# MCP Chat UI
+
+TypeScript/React chat UI for interacting with agents and MCP tools via WebSocket. **This project is not just a Chat UI — it is a boilerplate for building Model Context Protocol (MCP) servers and easily testing their capabilities by chatting with them.** The architecture enables rapid development, extension, and interactive experimentation with MCP agents and tools.
+
+<div align="center">
+	<video src="media/mcpdemo.mp4" controls width="600">
+		Your browser does not support the video tag.
+	</video>
+</div>
+
+## Agent & LLM Integration
+
+Agents are run using the **OpenAI Agents SDK** for seamless integration with MCP. The current implementation uses **Gemini LLM** for agent responses, but you can easily switch to OpenAI LLM by updating the agent configuration. This flexibility allows you to experiment with different large language models as needed.
+
+## Features
+
+- Chat with AI agents and tools in real time
+- Extensible tool system (register new tools by asking Copilot)
+- Chart rendering and data visualization
+- Google authentication integration
+- Hot reload and fast development with Vite
+- During chat, users can see all tool calls with their arguments and responses for debugging purposes
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v18+ recommended)
+- npm
+
+### Environment Setup
+
+1. Copy `.env.template` to `.env`:
+   ```bash
+   cp .env.template .env
+   ```
+2. Set your `GEMINI_API_KEY` in the `.env` file to enable Gemini LLM features.
+3. (Optional) Set `GOOGLE_CLIENT_ID` in `.env` to enable Google authentication for the chat UI.
+
+### Install Dependencies
+
+```bash
+# In project root
+npm install
+cd client
+npm install
+
+# or
+
+npm run install_all
+
+```
+
+### Run Development Server
+
+```bash
+# In project root
+npm run dev
+open http://localhost:5173/
+```
+
+### Start Production Build
+
+```bash
+# In project root
+npm run start
+open http://localhost:3000/
+```
+
+## Registering New MCP Tools
+
+You can add new server-side tools by simply asking Copilot:
+
+> register new tool with name `my_tool_name`, input parameters `param1: string`, `param2: number`, output fields `result: string`
+
+Copilot will generate the file and code for you. See `.github/copilot-instructions.md` for full details.
+
+## Project Structure
+
+- `client/` — React UI, organized by feature (chat, chart, common, ui)
+- `src/server/` — WebSocket server, agent/tool orchestration
+- `src/tools/` — MCP tools (auto-registered)
+- `src/agents/` — Agent logic
+- `.github/copilot-instructions.md` — AI agent instructions and conventions
+
+## About
+
+This project demonstrates a flexible, extensible chat UI for agent/tool workflows, **and serves as a boilerplate for building and interactively testing MCP servers and tools.** Developer productivity is powered by Copilot and clear conventions for rapid extension.
