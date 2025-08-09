@@ -2,6 +2,13 @@ import { parseJSON } from "@/lib/utils";
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
+export interface ImageResponseData {
+  text: string;
+  type: string;
+  data: string;
+  mimeType: string;
+}
+
 export interface AgentResponse {
   text: string;
   id?: string;
@@ -11,6 +18,7 @@ export interface AgentResponse {
   timestamp?: number;
   arguments?: string;
   runtime?: string;
+  image?: ImageResponseData;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json?: Record<string, any>;
 }
@@ -46,6 +54,25 @@ const chatSessionSlice = createSlice({
   name: "chatSession",
   initialState,
   reducers: {
+    addImageItem: (
+      state,
+      action: PayloadAction<{
+        type: string;
+        text: string;
+        data: string;
+        mimeType: string;
+      }>
+    ) => {
+      const imageItem = action.payload;
+      const item = {
+        prompt: "",
+        response: {
+          text: "[image]",
+          image: imageItem,
+        },
+      };
+      state.items.push(item);
+    },
     addChartItem: (
       state,
       action: PayloadAction<{
@@ -121,7 +148,10 @@ const chatSessionSlice = createSlice({
       // const index = state.items.length - 1;
       let index = -1;
       for (let i = state.items.length - 1; i >= 0; i--) {
-        if (typeof state.items[i].response.json === "undefined") {
+        if (
+          typeof state.items[i].response.json === "undefined" &&
+          typeof state.items[i].response.image === "undefined"
+        ) {
           index = i;
           break;
         }
@@ -186,5 +216,6 @@ export const {
   showToolResponse,
   addChartItem,
   setMCPServers,
+  addImageItem,
 } = chatSessionSlice.actions;
 export default chatSessionSlice.reducer;

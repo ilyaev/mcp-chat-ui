@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { parseJSON } from "@/lib/utils";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import type { ImageResponseData } from "@/store/slices/chatSessionSlice";
 
 interface ChatToolResponseProps {
   open: boolean;
@@ -21,19 +22,30 @@ interface ChatToolResponseProps {
     text: string;
     type: string;
     args: string;
+    items?: ImageResponseData[];
   };
 }
 
 class ChatToolResponse extends Component<ChatToolResponseProps> {
   render() {
-    let result = JSON.stringify(parseJSON(this.props.tool.text), null, 2);
-    if (
-      this.props.tool.text &&
-      this.props.tool.text[0] !== "{" &&
-      this.props.tool.text[0] !== "["
-    ) {
-      result = this.props.tool.text;
+    let result = "";
+
+    if (this.props.tool.text) {
+      result = JSON.stringify(parseJSON(this.props.tool.text), null, 2);
+
+      if (
+        this.props.tool.text &&
+        this.props.tool.text[0] !== "{" &&
+        this.props.tool.text[0] !== "["
+      ) {
+        result = this.props.tool.text;
+      }
+    } else if (this.props.tool.items) {
+      result = this.props.tool.items
+        .map((item) => JSON.stringify(item, null, 2))
+        .join("\n");
     }
+
     const str =
       "Arguments: \n\n" +
       JSON.stringify(parseJSON(this.props.tool.args), null, 2) +

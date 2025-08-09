@@ -1,6 +1,7 @@
 import { type Dispatch } from "@reduxjs/toolkit";
 import {
   addChartItem,
+  addImageItem,
   addItem,
   addToolCall,
   setChatSession,
@@ -8,6 +9,7 @@ import {
   setMCPServers,
   updateLastResponse,
   type ChatSessionState,
+  type ImageResponseData,
 } from "@/store/slices/chatSessionSlice";
 
 const WS_URL =
@@ -31,6 +33,7 @@ export class WebSocketSessionClient {
     [s: string]: {
       type: string;
       text: string;
+      items?: { type: string; text: string; data: string; mimeType: string }[];
       tool: string;
       args: string;
     };
@@ -113,15 +116,33 @@ export class WebSocketSessionClient {
       }
 
       if (data.toolOutput && data.id) {
+        if (data.output && data.output.data) {
+          data.output = [data.output];
+        }
         this.toolCallResults[data.id || ""] = {
           ...(this.toolCallResults[data.id || ""] || {}),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ...(data.output as any),
+          ...(Array.isArray(data.output) ? { text: "" } : (data.output as any)),
+          items: Array.isArray(data.output)
+            ? data.output.map((item: ImageResponseData) => ({
+                type: item.type || "text",
+                text: item.text || "",
+                data: item.data || "",
+                mimeType: item.mimeType || "text/plain",
+              }))
+            : [],
           tool: data.toolOutput,
         };
         if (data.toolOutput === "data_chart_generator") {
           this.dispatch(addChartItem(data));
           updated = true;
+        }
+        if (Array.isArray(data.output)) {
+          data.output.forEach((item: ImageResponseData) => {
+            if (item.mimeType && item.mimeType.startsWith("image/")) {
+              this.dispatch(addImageItem(item));
+            }
+          });
         }
       }
 

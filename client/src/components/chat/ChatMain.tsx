@@ -185,6 +185,7 @@ class ChatMain extends Component<ChatMainProps, ChatMainState> {
                 text: "Unknown",
                 type: "Unknown",
                 args: "Unknown",
+                items: [],
               }
             }
             open={true}

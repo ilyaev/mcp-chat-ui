@@ -50,6 +50,7 @@ export class MCPServersSelector extends React.Component<
       <>
         <div
           className=""
+          style={{ width: "20px" }}
           title={`${
             this.state.values.length || "0"
           } External MCP Servers selected`}

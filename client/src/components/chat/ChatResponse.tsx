@@ -49,6 +49,9 @@ export class ChatResponse extends Component<ChatResponseProps> {
     const isChart = Boolean(
       this.props.response.json && this.props.response.json.chartData
     );
+    const isImage = Boolean(
+      this.props.response.image && this.props.response.image.data
+    );
     return (
       <div
         style={{ maxWidth: "95vw", overflow: "auto" }}
@@ -64,11 +67,24 @@ export class ChatResponse extends Component<ChatResponseProps> {
           this.renderTool(this.props.response)
         ) : isChart ? (
           this.renderChart(this.props.response)
+        ) : isImage ? (
+          this.renderImage(this.props.response)
         ) : (
           <Markdown remarkPlugins={[remarkGfm]}>
             {this.props.response.text.replace("[CHART_HERE]", "")}
           </Markdown>
         )}
+      </div>
+    );
+  }
+
+  renderImage(response: AgentResponse) {
+    const { image } = response;
+    if (!image) return null;
+
+    return (
+      <div className="flex flex-col">
+        <img src={`data:${image.mimeType};base64,${image.data}`} width={640} />
       </div>
     );
   }
