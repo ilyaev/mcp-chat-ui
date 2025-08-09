@@ -28,6 +28,7 @@ export interface ChatSessionState {
   templateId: number;
   prompt: string;
   toolResponseId: string;
+  mcpServers: { id: string; title: string }[];
 }
 
 const initialState: ChatSessionState = {
@@ -38,6 +39,7 @@ const initialState: ChatSessionState = {
   templateId: 0,
   prompt: "",
   toolResponseId: "",
+  mcpServers: [],
 };
 
 const chatSessionSlice = createSlice({
@@ -143,6 +145,12 @@ const chatSessionSlice = createSlice({
     showToolResponse(state, action: PayloadAction<string>) {
       state.toolResponseId = action.payload;
     },
+    setMCPServers(
+      state,
+      action: PayloadAction<{ id: string; title: string }[]>
+    ) {
+      state.mcpServers = action.payload;
+    },
     setChatSession(state, action: PayloadAction<Partial<ChatSessionState>>) {
       state.tokens =
         typeof action.payload.tokens === "undefined"
@@ -177,5 +185,6 @@ export const {
   setPrompt,
   showToolResponse,
   addChartItem,
+  setMCPServers,
 } = chatSessionSlice.actions;
 export default chatSessionSlice.reducer;

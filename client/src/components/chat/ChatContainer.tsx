@@ -15,6 +15,7 @@ import type { ProfileState } from "@/store/slices/profileSlice";
 
 import ChatPromptTemplate from "./ChatPromptTemplate";
 import { BoxIcon } from "lucide-react";
+import { MCPServersSelector } from "./ChatMCPSelector";
 
 interface ChatContainerProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ interface ChatContainerProps {
   tokens?: number;
   profile: ProfileState;
   onPromptSelected: (value: string) => void;
+  mcpServers: { id: string; title: string }[];
 }
 
 class ChatContainer extends Component<ChatContainerProps> {
@@ -33,6 +35,11 @@ class ChatContainer extends Component<ChatContainerProps> {
           <CardTitle className="text-2xl flex">
             Chat MCP
             <div className="flex-1 flex justify-center">
+              {this.props.mcpServers && this.props.mcpServers.length > 0 ? (
+                <div className="flex items-center gap-1 border-0 text-muted-foreground cursor-pointer">
+                  <MCPServersSelector servers={this.props.mcpServers || []} />
+                </div>
+              ) : null}
               <ChatPromptTemplate
                 onPromptSelected={this.props.onPromptSelected}
               />
@@ -73,6 +80,7 @@ class ChatContainer extends Component<ChatContainerProps> {
 
 const mapStateToProps = (state: RootState) => ({
   profile: state.profile,
+  mcpServers: state.chatSession.mcpServers,
 });
 
 export default connect(mapStateToProps)(ChatContainer);

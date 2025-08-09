@@ -7,6 +7,7 @@ import moment from "moment-timezone";
 import { parseJSON } from "../utils";
 import { AgentsHelper } from "../utils/agents_helper";
 import { AgentInputItem } from "@openai/agents";
+import { EXTERNAL_MCP_SERVERS_CONFIG } from "../utils/external_mcp";
 
 interface WebSocketMessage {
   type: string;
@@ -14,6 +15,7 @@ interface WebSocketMessage {
   prompt: string;
   model: string;
   id_token?: string;
+  mcpServers?: string[];
 }
 
 export class WebSocketConnection {
@@ -37,6 +39,13 @@ export class WebSocketConnection {
     this.user = {} as TokenPayload;
 
     this.toolCallId = "";
+
+    this.sendMessage({
+      type: "config",
+      config: {
+        mcpServers: EXTERNAL_MCP_SERVERS_CONFIG,
+      },
+    });
 
     this.ws.on("message", async (message) => {
       let data: WebSocketMessage;
@@ -70,9 +79,13 @@ export class WebSocketConnection {
 
           const input = this.generateInput(data);
 
-          const stream = await this.session.startStream(input);
+          const stream = await this.session.startStream(
+            input,
+            data.mcpServers || []
+          );
 
           for await (const event of stream as any) {
+            console.log(event);
             if (!this.active) {
               console.log("Connection closed, stopping process");
               break;
@@ -219,7 +232,9 @@ export class WebSocketConnection {
           sessionId: data.session_id,
           id: this.toolCallId,
           toolOutput: get(event, "item.rawItem.name"),
-          output: parseJSON(event.item.output),
+          output: this.parseToolOutput(
+            event.item.output || get(event, "item.rawItem.output.text")
+          ),
         })
       );
     }
@@ -267,5 +282,12 @@ export class WebSocketConnection {
 
   sendMessage(message: object) {
     this.ws.send(JSON.stringify(message));
+  }
+
+  parseToolOutput(output: any) {
+    if (typeof output === "object") {
+      return output;
+    }
+    return parseJSON(output);
   }
 }

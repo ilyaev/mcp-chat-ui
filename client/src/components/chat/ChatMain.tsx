@@ -14,6 +14,8 @@ import {
 import { CardTitle } from "../ui/card";
 import { ChatScrollToBottom } from "./ChatScrollToBottom";
 import ChatToolResponse from "./ChatToolResponse";
+import { LOCAL_STORAGE_KEY } from "./ChatMCPSelector";
+import { parseJSON } from "@/lib/utils";
 
 interface ChatMainState {
   scroll: "auto" | "manual";
@@ -72,6 +74,9 @@ class ChatMain extends Component<ChatMainProps, ChatMainState> {
     if (!prompt.trim()) return;
     this.setState({ brief: false });
     this.manualScroll = false;
+    this.chatSession?.setMCPServers(
+      parseJSON(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]")
+    );
     this.chatSession?.send(prompt);
   };
 

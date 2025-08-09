@@ -1,6 +1,7 @@
 import {
   Agent,
   AgentInputItem,
+  MCPServerStdio,
   MCPServerStreamableHttp,
   Runner,
   RunResult,
@@ -47,7 +48,10 @@ export class AgentsHelper {
     try {
       if (agent.mcpServers && agent.mcpServers.length > 0) {
         for (let mcpServer of agent.mcpServers) {
-          if (mcpServer instanceof MCPServerStreamableHttp) {
+          if (
+            mcpServer instanceof MCPServerStreamableHttp ||
+            mcpServer instanceof MCPServerStdio
+          ) {
             await mcpServer.connect();
           }
         }

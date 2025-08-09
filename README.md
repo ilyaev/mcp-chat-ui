@@ -2,7 +2,7 @@
 
 TypeScript/React chat UI for interacting with agents and MCP tools via WebSocket. **This project is not just a Chat UI — it is a boilerplate for building Model Context Protocol (MCP) servers and easily testing their capabilities by chatting with them.** The architecture enables rapid development, extension, and interactive experimentation with MCP agents and tools.
 
-https://github.com/user-attachments/assets/3ba1064b-34ac-48cd-9e5c-e038eac0f693
+https://github.com/user-attachments/assets/6399afdb-a060-44dc-903e-907990370b47
 
 ## Agent & LLM Integration
 
@@ -70,6 +70,33 @@ You can add new server-side tools by simply asking Copilot:
 > register new tool with name `my_tool_name`, input parameters `param1: string`, `param2: number`, output fields `result: string`
 
 Copilot will generate the file and code for you. See `.github/copilot-instructions.md` for full details.
+
+## Registering External MCP Servers
+
+You can add new external MCP servers by editing the `mcp.json` file in the project root. List your server endpoints and configuration in this file to make them available for selection in the chat UI.
+
+## Registering External MCP Servers
+
+You can add new external MCP servers by editing the `mcp.json` file in the project root. List your server endpoints and configuration in this file to make them available for selection in the chat UI.
+
+### Example `mcp.json`
+
+```jsonc
+{
+  "mcpServers": {
+    "playwright": {
+      "description": "Playwright MCP",
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--headless", "--isolated"]
+    },
+    "memory": {
+      "description": "Server Memory MCP",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    }
+  }
+}
+```
 
 ## Project Structure
 

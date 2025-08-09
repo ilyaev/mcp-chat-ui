@@ -5,6 +5,7 @@ import {
   addToolCall,
   setChatSession,
   setConnected,
+  setMCPServers,
   updateLastResponse,
   type ChatSessionState,
 } from "@/store/slices/chatSessionSlice";
@@ -34,6 +35,7 @@ export class WebSocketSessionClient {
       args: string;
     };
   };
+  mcpServers: string[] = [] as string[];
 
   constructor(googleIdToken: string, dispatch: Dispatch) {
     this.url = WS_URL;
@@ -83,6 +85,10 @@ export class WebSocketSessionClient {
       } catch {
         console.error("Error parsing WebSocket message:", event.data);
         return;
+      }
+
+      if (data.config) {
+        this.processConfig(data);
       }
 
       if (data.delta && !data.tool) {
@@ -183,6 +189,10 @@ export class WebSocketSessionClient {
     }
   };
 
+  setMCPServers(servers: string[]) {
+    this.mcpServers = servers;
+  }
+
   async send(message: string) {
     if (!this.ws || !this.connected) {
       this.initWebSocket();
@@ -199,11 +209,25 @@ export class WebSocketSessionClient {
         prompt: message,
         model: this.model,
         instructions: "",
+        mcpServers: this.mcpServers,
         id_token: this.googleIdToken || "",
       })
     );
 
     this.notifyUpdate();
+  }
+
+  processConfig(data: { config: { mcpServers: { [key: string]: string } } }) {
+    this.dispatch(
+      setMCPServers(
+        Object.keys(data.config.mcpServers || {}).map((key) => {
+          return {
+            id: key,
+            title: data.config.mcpServers[key],
+          };
+        })
+      )
+    );
   }
 
   disconnect() {

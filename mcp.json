@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "description": "Playwright MCP",
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--headless", "--isolated"]
+    },
+    "memory": {
+      "description": "Server Memory MCP",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    }
+  }
+}

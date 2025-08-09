@@ -3,15 +3,22 @@ import {
   AgentInputItem,
   MCPServerStreamableHttp,
   OpenAIChatCompletionsModel,
+  MCPServerStdio,
+  MCPServer,
 } from "@openai/agents";
 import OpenAI from "openai";
 import { AgentsHelper } from "./agents_helper";
 import SystemPrompt from "../instructions/system_prompt";
 import { now } from "./index";
+import { loadExternalMcpServers } from "./external_mcp";
 
 const TOOL_RESPONSE_PURGE_THRESHOLD = 1024 * 3;
 
-const mcpServer = new MCPServerStreamableHttp({
+const EXTERNAL_MCP_SERVERS = loadExternalMcpServers() as {
+  [s: string]: MCPServer;
+};
+
+const myMCPServer = new MCPServerStreamableHttp({
   url: process.env.BACKEND_URL + "/mcp",
   name: "MCP Server",
   authProvider: {
@@ -71,7 +78,11 @@ export class ChatSession {
       model: modelFlash25,
       name: "AI Agent",
       instructions: SystemPrompt.replace(/\%\%NOW\%\%/gi, now()),
-      mcpServers: [mcpServer],
+      mcpServers: ([myMCPServer] as MCPServer[]).concat(
+        Object.keys(EXTERNAL_MCP_SERVERS).map(
+          (key) => EXTERNAL_MCP_SERVERS[key] as MCPServer
+        )
+      ),
       modelSettings: {
         parallelToolCalls: false,
       },
@@ -130,7 +141,12 @@ export class ChatSession {
     this.update();
   }
 
-  async startStream(prompt: string | AgentInputItem[]) {
+  async startStream(prompt: string | AgentInputItem[], mcpServers: string[]) {
+    this.aiAgent.mcpServers = [myMCPServer].concat(
+      mcpServers
+        .map((id) => EXTERNAL_MCP_SERVERS[id] || null)
+        .filter(Boolean) as any
+    );
     return await AgentsHelper.stream(this.aiAgent, prompt);
   }
 }

@@ -26,11 +26,19 @@ interface ChatToolResponseProps {
 
 class ChatToolResponse extends Component<ChatToolResponseProps> {
   render() {
+    let result = JSON.stringify(parseJSON(this.props.tool.text), null, 2);
+    if (
+      this.props.tool.text &&
+      this.props.tool.text[0] !== "{" &&
+      this.props.tool.text[0] !== "["
+    ) {
+      result = this.props.tool.text;
+    }
     const str =
       "Arguments: \n\n" +
       JSON.stringify(parseJSON(this.props.tool.args), null, 2) +
       "\n\nResult:\n\n" +
-      JSON.stringify(parseJSON(this.props.tool.text), null, 2);
+      result;
     return (
       <Dialog
         open={true}
