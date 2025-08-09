@@ -8,7 +8,7 @@
     "client": "cd ./client && npm run dev",
     "server": "tsx --watch --env-file=.env src/index.ts",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "test": "npx jest --config jest.config.js",
+    "test": "npx jest --config jest.config.js --passWithNoTests",
     "release": "cd ./client && yarn build && cd .. && standard-version && git push --follow-tags origin main",
     "inspect": "npx @modelcontextprotocol/inspector",
     "install_all": "ls -l && npm install && cd ./client && npm install && npm run build && cd .."
