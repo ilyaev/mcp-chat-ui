@@ -85,7 +85,6 @@ export class WebSocketConnection {
           );
 
           for await (const event of stream as any) {
-            console.log(event);
             if (!this.active) {
               console.log("Connection closed, stopping process");
               break;
