@@ -80,11 +80,7 @@ Copilot will generate the file and code for you. See `.github/copilot-instructio
 
 ## Registering External MCP Servers
 
-You can add new external MCP servers by editing the `mcp.json` file in the project root. List your server endpoints and configuration in this file to make them available for selection in the chat UI.
-
-## Registering External MCP Servers
-
-You can add new external MCP servers by editing the `mcp.json` file in the project root. List your server endpoints and configuration in this file to make them available for selection in the chat UI.
+You can add new external MCP servers by editing the `mcp.json` file in the project root. List your server configuration in this file to make them available for selection in the chat UI.
 
 ### Example `mcp.json`
 
