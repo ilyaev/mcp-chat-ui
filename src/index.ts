@@ -4,17 +4,22 @@ dotenv.config();
 
 import express from "express";
 import { createServer } from "http";
+import bodyParser from "body-parser";
 
 import { setupMcpServer } from "./server/mcp";
 import { setupWsServer } from "./server/ws_server";
 import authGoogleRouter from "./server/auth_google";
 
 import path from "path";
+import { localHtmlPageRenderer } from "./server/local_html_server";
 
 const app = express();
 
 app.use(express.json());
 app.use(authGoogleRouter);
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.post("/webserver", localHtmlPageRenderer);
 
 app.use("/", express.static(path.join(__dirname, "../client/dist")));
 

@@ -8,6 +8,9 @@ import { parseJSON } from "../utils";
 import { AgentsHelper } from "../utils/agents_helper";
 import { AgentInputItem } from "@openai/agents";
 import { EXTERNAL_MCP_SERVERS_CONFIG } from "../utils/external_mcp";
+import fs from "fs";
+
+const DEBUG = false;
 
 interface WebSocketMessage {
   type: string;
@@ -35,7 +38,7 @@ export class WebSocketConnection {
     console.log("WebSocket client connected");
 
     this.active = true;
-    this.session = new ChatSession();
+    // this.session = new ChatSession();
     this.user = {} as TokenPayload;
 
     this.toolCallId = "";
@@ -46,7 +49,7 @@ export class WebSocketConnection {
         mcpServers: EXTERNAL_MCP_SERVERS_CONFIG,
       },
     });
-
+    const allEvents = [] as any;
     this.ws.on("message", async (message) => {
       let data: WebSocketMessage;
 
@@ -85,6 +88,13 @@ export class WebSocketConnection {
           );
 
           for await (const event of stream as any) {
+            if (DEBUG) {
+              allEvents.push(event);
+              fs.writeFileSync(
+                `ws_events.json`,
+                JSON.stringify(allEvents, null, 2)
+              );
+            }
             if (!this.active) {
               console.log("Connection closed, stopping process");
               break;
@@ -182,32 +192,30 @@ export class WebSocketConnection {
 
     delta &&
       delta.trim() &&
-      this.ws.send(
-        JSON.stringify({
-          sessionId: data.session_id,
-          delta,
-          tool:
-            isToolCalled || toolName
-              ? toolName
-                ? {
-                    ...get<object>(
-                      event,
-                      "data.event.choices.0.delta.tool_calls.0.function",
-                      {}
-                    ),
-                    started: true,
-                    id: this.toolCallId,
-                    timestamp: moment().utc().valueOf(),
-                  }
-                : {
-                    ...event.item.rawItem,
-                    finished: true,
-                    id: this.toolCallId,
-                    timestamp: moment().utc().valueOf(),
-                  }
-              : undefined,
-        })
-      );
+      this.sendMessage({
+        sessionId: data.session_id,
+        delta,
+        tool:
+          isToolCalled || toolName
+            ? toolName
+              ? {
+                  ...get<object>(
+                    event,
+                    "data.event.choices.0.delta.tool_calls.0.function",
+                    {}
+                  ),
+                  started: true,
+                  id: this.toolCallId,
+                  timestamp: moment().utc().valueOf(),
+                }
+              : {
+                  ...event.item.rawItem,
+                  finished: true,
+                  id: this.toolCallId,
+                  timestamp: moment().utc().valueOf(),
+                }
+            : undefined,
+      });
 
     if (
       isMessageOutputCreated &&
@@ -225,36 +233,60 @@ export class WebSocketConnection {
       result = output;
     }
 
-    if (eventName === "tool_output") {
-      this.ws.send(
-        JSON.stringify({
-          sessionId: data.session_id,
+    if (
+      eventName === "message_output_created" &&
+      rawItemStatus === "completed" &&
+      event.item.rawItem.content &&
+      this.toolCallId
+    ) {
+      this.sendMessage({
+        sessionId: data.session_id,
+        tool: {
+          finished: true,
           id: this.toolCallId,
-          toolOutput: get(event, "item.rawItem.name"),
-          output: this.parseToolOutput(
-            event.item.output || get(event, "item.rawItem.output.text")
-          ),
-        })
-      );
+          timestamp: moment().utc().valueOf(),
+        },
+      });
+      this.sendMessage({
+        sessionId: data.session_id,
+        id: this.toolCallId,
+        toolOutput: get(
+          event,
+          "item.rawItem.name",
+          "transfer_to_Coding_AI_Agent"
+        ),
+        output: this.parseToolOutput(
+          event.item.output || get(event, "item.rawItem.content", "")
+        ),
+      });
+    }
+
+    if (eventName === "tool_output") {
+      this.sendMessage({
+        sessionId: data.session_id,
+        id: this.toolCallId,
+        toolOutput: get(event, "item.rawItem.name"),
+        output: this.parseToolOutput(
+          event.item.output || get(event, "item.rawItem.output.text")
+        ),
+      });
     }
     return result;
   }
 
   private async verifyAuth(data: WebSocketMessage) {
     if (!process.env.GEMINI_API_KEY) {
-      this.ws.send(
-        JSON.stringify({
-          error:
-            "Gemini API Key is not set. Update .env file to have GEMINI_API_KEY=[YOUR_API_KEY]",
-        })
-      );
+      this.sendMessage({
+        error:
+          "Gemini API Key is not set. Update .env file to have GEMINI_API_KEY=[YOUR_API_KEY]",
+      });
       return false;
     }
     // Google ID token authentication
     if (process.env.GOOGLE_CLIENT_ID) {
       try {
         if (!data.id_token) {
-          this.ws.send(JSON.stringify({ error: "Missing Google ID token" }));
+          this.sendMessage({ error: "Missing Google ID token" });
           this.ws.close && this.ws.close();
           return;
         }
@@ -269,7 +301,7 @@ export class WebSocketConnection {
           (this.ws as any).user = this.user;
         }
       } catch (err) {
-        this.ws.send(JSON.stringify({ error: "Invalid Google ID token" }));
+        this.sendMessage({ error: "Invalid Google ID token" });
         this.ws.close && this.ws.close();
         return false;
       }

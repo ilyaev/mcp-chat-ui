@@ -82,6 +82,13 @@ const prompts: PromptTemplate[] = [
       },
     ],
   },
+  {
+    id: 5,
+    name: "3d Visualization",
+    description: "Examples of 3D visualizations",
+    content:
+      "Create 3d scene: Flying through star field, stars coming from center. In the middle there is cube rotating, with basic lighting.",
+  },
 ];
 
 export default prompts;

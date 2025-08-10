@@ -1,6 +1,7 @@
 import { type Dispatch } from "@reduxjs/toolkit";
 import {
   addChartItem,
+  addHTMLItem,
   addImageItem,
   addItem,
   addToolCall,
@@ -121,8 +122,7 @@ export class WebSocketSessionClient {
         }
         this.toolCallResults[data.id || ""] = {
           ...(this.toolCallResults[data.id || ""] || {}),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ...(Array.isArray(data.output) ? { text: "" } : (data.output as any)),
+          ...(Array.isArray(data.output) ? { text: "" } : data.output),
           items: Array.isArray(data.output)
             ? data.output.map((item: ImageResponseData) => ({
                 type: item.type || "text",
@@ -133,14 +133,22 @@ export class WebSocketSessionClient {
             : [],
           tool: data.toolOutput,
         };
+
         if (data.toolOutput === "data_chart_generator") {
           this.dispatch(addChartItem(data));
           updated = true;
         }
+
         if (Array.isArray(data.output)) {
           data.output.forEach((item: ImageResponseData) => {
             if (item.mimeType && item.mimeType.startsWith("image/")) {
               this.dispatch(addImageItem(item));
+            }
+            if (
+              (item.text && item.text.startsWith("```html")) ||
+              (item.mimeType && item.mimeType.startsWith("text/html"))
+            ) {
+              this.dispatch(addHTMLItem({ ...item, mimeType: "text/html" }));
             }
           });
         }

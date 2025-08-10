@@ -132,6 +132,11 @@ class ChatMain extends Component<ChatMainProps, ChatMainState> {
     }, 100);
   };
 
+  handleFixErrors = (_index: number, errors: string[]) => {
+    const uniqueErrors = Array.from(new Set(errors));
+    this.handleSend(`Fix Errors: ${uniqueErrors.join(", ")}`);
+  };
+
   render() {
     const brief = this.state.brief;
     return (
@@ -147,7 +152,10 @@ class ChatMain extends Component<ChatMainProps, ChatMainState> {
             onScroll={this.onScroll.bind(this)}
             style={{ overflow: "auto" }}
           >
-            <ChatList sending={this.props.sending} />
+            <ChatList
+              sending={this.props.sending}
+              onFixErrors={this.handleFixErrors}
+            />
             {this.state.scroll === "manual" && (
               <ChatScrollToBottom
                 onClick={() => this.pushScrollToBottom(false)}

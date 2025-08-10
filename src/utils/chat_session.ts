@@ -3,12 +3,12 @@ import {
   AgentInputItem,
   MCPServerStreamableHttp,
   OpenAIChatCompletionsModel,
-  MCPServerStdio,
   MCPServer,
 } from "@openai/agents";
 import OpenAI from "openai";
 import { AgentsHelper } from "./agents_helper";
 import SystemPrompt from "../instructions/system_prompt";
+import codingAgentInstructions from "../instructions/coding_agent_instructions";
 import { now } from "./index";
 import { loadExternalMcpServers } from "./external_mcp";
 
@@ -69,20 +69,34 @@ export class ChatSession {
       baseURL: process.env.GEMINI_API_BASE_URL,
     }),
 
+    public modelFlash20 = new OpenAIChatCompletionsModel(
+      openai,
+      "gemini-2.0-flash"
+    ),
+
     public modelFlash25 = new OpenAIChatCompletionsModel(
       openai,
       "gemini-2.5-flash"
     ),
 
-    public aiAgent = new Agent({
+    public codingAgent = new Agent({
       model: modelFlash25,
-      name: "AI Agent",
+      name: "Coding AI Agent",
+      instructions: codingAgentInstructions,
+      handoffDescription:
+        "Use this agent when you need to create a single HTML/JavaScript/CSS web page application based on user input. Or if you need to generate code snippets or assist with programming tasks. Or you need to demonstrate something visually and it can be done using HTML/CSS/JavaScript.",
+    }),
+
+    public genericAgent = new Agent({
+      model: modelFlash25,
+      name: "Generic AI Agent",
       instructions: SystemPrompt.replace(/\%\%NOW\%\%/gi, now()),
       mcpServers: ([myMCPServer] as MCPServer[]).concat(
         Object.keys(EXTERNAL_MCP_SERVERS).map(
           (key) => EXTERNAL_MCP_SERVERS[key] as MCPServer
         )
       ),
+      handoffs: [codingAgent],
       modelSettings: {
         parallelToolCalls: false,
       },
@@ -100,7 +114,10 @@ export class ChatSession {
 
   setHistory(history: AgentInputItem[]) {
     this.history = this.purgeContext(history);
-    this.aiAgent.instructions = SystemPrompt.replace(/\%\%NOW\%\%/gi, now());
+    this.genericAgent.instructions = SystemPrompt.replace(
+      /\%\%NOW\%\%/gi,
+      now()
+    );
     console.log("Setting history for session", {
       sessionId: this.sessionId,
       history_size: this.getContextSize(),
@@ -142,11 +159,11 @@ export class ChatSession {
   }
 
   async startStream(prompt: string | AgentInputItem[], mcpServers: string[]) {
-    this.aiAgent.mcpServers = [myMCPServer].concat(
+    this.genericAgent.mcpServers = [myMCPServer].concat(
       mcpServers
         .map((id) => EXTERNAL_MCP_SERVERS[id] || null)
         .filter(Boolean) as any
     );
-    return await AgentsHelper.stream(this.aiAgent, prompt);
+    return await AgentsHelper.stream(this.genericAgent, prompt);
   }
 }

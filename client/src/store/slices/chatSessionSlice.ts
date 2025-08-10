@@ -21,6 +21,7 @@ export interface AgentResponse {
   image?: ImageResponseData;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json?: Record<string, any>;
+  html?: ImageResponseData;
 }
 
 export interface ChatItem {
@@ -54,6 +55,25 @@ const chatSessionSlice = createSlice({
   name: "chatSession",
   initialState,
   reducers: {
+    addHTMLItem: (
+      state,
+      action: PayloadAction<{
+        type: string;
+        text: string;
+        data: string;
+        mimeType: string;
+      }>
+    ) => {
+      const htmlItem = action.payload;
+      const item = {
+        prompt: "",
+        response: {
+          text: "[html]",
+          html: htmlItem,
+        },
+      };
+      state.items.push(item);
+    },
     addImageItem: (
       state,
       action: PayloadAction<{
@@ -217,5 +237,6 @@ export const {
   addChartItem,
   setMCPServers,
   addImageItem,
+  addHTMLItem,
 } = chatSessionSlice.actions;
 export default chatSessionSlice.reducer;

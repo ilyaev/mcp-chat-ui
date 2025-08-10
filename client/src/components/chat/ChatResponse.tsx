@@ -22,10 +22,21 @@ import { parseJSON } from "@/lib/utils";
 import { connect } from "react-redux";
 import type { Dispatch } from "@reduxjs/toolkit";
 import { ChatChart, type ChatChartConfig } from "./ChatChart";
+import HTMLPreview from "../preview/HTMLPreview";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
 
 interface ChatResponseProps {
   response: AgentResponse;
+  nextItem?: AgentResponse;
   dispatch?: Dispatch;
+  index: number;
+  onFixErrors?: (index: number, errors: string[]) => void;
+}
+
+interface State {
+  errors: string[];
 }
 
 const IconsMap = {
@@ -41,7 +52,25 @@ const IconsMap = {
   offset: <OffsetIcon />,
 } as never;
 
-export class ChatResponse extends Component<ChatResponseProps> {
+export class ChatResponse extends Component<ChatResponseProps, State> {
+  constructor(props: ChatResponseProps) {
+    super(props);
+    this.state = {
+      errors: [],
+    };
+  }
+
+  componentDidMount(): void {
+    window.addEventListener("message", (event) => {
+      const data = event.data;
+      if (data && data.type === "error-tracking") {
+        this.setState((prevState) => ({
+          errors: [...prevState.errors, data.error],
+        }));
+      }
+    });
+  }
+
   render() {
     const { started, finished, name } = this.props.response;
     const toolArguments = this.props.response.arguments;
@@ -51,6 +80,9 @@ export class ChatResponse extends Component<ChatResponseProps> {
     );
     const isImage = Boolean(
       this.props.response.image && this.props.response.image.data
+    );
+    const isHtml = Boolean(
+      this.props.response.html && this.props.response.html.text
     );
     return (
       <div
@@ -69,10 +101,61 @@ export class ChatResponse extends Component<ChatResponseProps> {
           this.renderChart(this.props.response)
         ) : isImage ? (
           this.renderImage(this.props.response)
-        ) : (
-          <Markdown remarkPlugins={[remarkGfm]}>
-            {this.props.response.text.replace("[CHART_HERE]", "")}
-          </Markdown>
+        ) : isHtml ? null : (
+          <>
+            {this.props.nextItem && this.props.nextItem.html ? (
+              <Tabs defaultValue="account" className="w-[400px]">
+                <TabsList>
+                  <TabsTrigger value="account">HTML Preview</TabsTrigger>
+                  <TabsTrigger value="password">HTML Code</TabsTrigger>
+                  {this.state.errors.length > 0 && (
+                    <TabsTrigger value="errors" style={{ color: "red" }}>
+                      Errors
+                    </TabsTrigger>
+                  )}
+                </TabsList>
+                <TabsContent value="account">
+                  <HTMLPreview index={this.props.index}>
+                    {this.props.nextItem.html.text}
+                  </HTMLPreview>
+                </TabsContent>
+                <TabsContent value="password">
+                  <Textarea style={{ width: "1024px" }}>
+                    {this.props.nextItem.html.text
+                      .replace("```html", "")
+                      .replace("```", "")}
+                  </Textarea>
+                </TabsContent>
+                {this.state.errors.length > 0 && (
+                  <TabsContent value="errors">
+                    {Array.from(new Set(this.state.errors)).map(
+                      (error, index) => (
+                        <div key={index}>{error}</div>
+                      )
+                    )}
+                    <Button
+                      variant="destructive"
+                      className="mt-2"
+                      onClick={() => {
+                        if (this.props.onFixErrors) {
+                          this.props.onFixErrors(
+                            this.props.index,
+                            this.state.errors
+                          );
+                        }
+                      }}
+                    >
+                      Auto Fix Errors
+                    </Button>
+                  </TabsContent>
+                )}
+              </Tabs>
+            ) : (
+              <Markdown remarkPlugins={[remarkGfm]}>
+                {this.props.response.text.replace("[CHART_HERE]", "")}
+              </Markdown>
+            )}
+          </>
         )}
       </div>
     );

@@ -9,6 +9,7 @@ import type { RootState } from "@/store";
 interface ChatListProps {
   items: ChatItem[];
   sending?: boolean;
+  onFixErrors?: (index: number, errors: string[]) => void;
 }
 
 export class ChatList extends Component<ChatListProps> {
@@ -18,7 +19,16 @@ export class ChatList extends Component<ChatListProps> {
         {this.props.items.map((item, idx) => (
           <React.Fragment key={`chat-item-${idx}`}>
             {item.prompt && <ChatPrompt prompt={item.prompt} />}
-            {item.response.text && <ChatResponse response={item.response} />}
+            {item.response.text && (
+              <ChatResponse
+                response={item.response}
+                index={idx}
+                onFixErrors={this.props.onFixErrors}
+                nextItem={
+                  (this.props.items[idx + 1] || {}).response || undefined
+                }
+              />
+            )}
           </React.Fragment>
         ))}
         {this.props.sending ? (

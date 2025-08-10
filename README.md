@@ -2,7 +2,7 @@
 
 TypeScript/React chat UI for interacting with agents and MCP tools via WebSocket. **This project is not just a Chat UI — it is a boilerplate for building Model Context Protocol (MCP) servers and easily testing their capabilities by chatting with them.** The architecture enables rapid development, extension, and interactive experimentation with MCP agents and tools.
 
-https://github.com/user-attachments/assets/fd2df5c2-80a3-4a24-8d08-818a14dc1497
+https://github.com/user-attachments/assets/ce39f244-9d77-4d29-b6e2-1119063653b8
 
 ## Agent & LLM Integration
 
