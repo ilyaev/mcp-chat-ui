@@ -12,10 +12,11 @@ Agents are run using the **OpenAI Agents SDK** for seamless integration with MCP
 
 - Chat with AI agents and tools in real time
 - Extensible tool system (register new tools by asking Copilot)
+- During chat, users can see all tool calls with their arguments and responses for debugging purposes
 - Chart rendering and data visualization
+- Coding AI Canvas implementation, allowing users to create designs and interactive visualizations by providing a natural language description (like Gemini Canvas). 'f.e. a user could say "visualize inserting sorting algorithm" and the system would generate and show a interactive visual representation of the algorithm.'
 - Google authentication integration
 - Hot reload and fast development with Vite
-- During chat, users can see all tool calls with their arguments and responses for debugging purposes
 
 ## Getting Started
 
