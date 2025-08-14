@@ -3,6 +3,8 @@ import React, { Component, createRef } from "react";
 interface HTMLPreviewProps {
   children: React.ReactNode;
   index: number;
+  height?: number;
+  title?: string;
 }
 
 class HTMLPreview extends Component<HTMLPreviewProps> {
@@ -94,7 +96,12 @@ class HTMLPreview extends Component<HTMLPreviewProps> {
         ref={this.iframeRef}
         name={`html-preview-iframe_${this.props.index}`}
         title="HTML Preview"
-        style={{ width: "1024px", height: "768px", border: "none" }}
+        sandbox="allow-scripts allow-same-origin"
+        style={{
+          width: "1024px",
+          height: `${this.props.height || 768}px`,
+          border: "none",
+        }}
       />
     );
   }

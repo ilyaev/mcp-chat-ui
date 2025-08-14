@@ -84,80 +84,95 @@ export class ChatResponse extends Component<ChatResponseProps, State> {
     const isHtml = Boolean(
       this.props.response.html && this.props.response.html.text
     );
+    const isTransferToAgent = name?.includes("transfer_to");
     return (
-      <div
-        style={{ maxWidth: "95vw", overflow: "auto" }}
-        className={`bg-transparent border-0 text-base item flex flex-col ${
-          isTool
-            ? "p-0 mb-1 flex-row items-center gap-2 text-muted-foreground flex"
-            : "mb-2 p-1 gap-6"
-        }`}
-      >
-        {started && <SpinnerIcon />}
-        {finished && <CheckmarkIcon />}
-        {isTool ? (
-          this.renderTool(this.props.response)
-        ) : isChart ? (
-          this.renderChart(this.props.response)
-        ) : isImage ? (
-          this.renderImage(this.props.response)
-        ) : isHtml ? null : (
-          <>
-            {this.props.nextItem && this.props.nextItem.html ? (
-              <Tabs defaultValue="account" className="w-[400px]">
-                <TabsList>
-                  <TabsTrigger value="account">HTML Preview</TabsTrigger>
-                  <TabsTrigger value="password">HTML Code</TabsTrigger>
-                  {this.state.errors.length > 0 && (
-                    <TabsTrigger value="errors" style={{ color: "red" }}>
-                      Errors
-                    </TabsTrigger>
-                  )}
-                </TabsList>
-                <TabsContent value="account">
-                  <HTMLPreview index={this.props.index}>
-                    {this.props.nextItem.html.text}
-                  </HTMLPreview>
-                </TabsContent>
-                <TabsContent value="password">
-                  <Textarea style={{ width: "1024px" }}>
-                    {this.props.nextItem.html.text
-                      .replace("```html", "")
-                      .replace("```", "")}
-                  </Textarea>
-                </TabsContent>
-                {this.state.errors.length > 0 && (
-                  <TabsContent value="errors">
-                    {Array.from(new Set(this.state.errors)).map(
-                      (error, index) => (
-                        <div key={index}>{error}</div>
-                      )
-                    )}
-                    <Button
-                      variant="destructive"
-                      className="mt-2"
-                      onClick={() => {
-                        if (this.props.onFixErrors) {
-                          this.props.onFixErrors(
-                            this.props.index,
-                            this.state.errors
-                          );
-                        }
-                      }}
-                    >
-                      Auto Fix Errors
-                    </Button>
-                  </TabsContent>
-                )}
-              </Tabs>
-            ) : (
-              <Markdown remarkPlugins={[remarkGfm]}>
-                {this.props.response.text.replace("[CHART_HERE]", "")}
-              </Markdown>
-            )}
-          </>
+      <>
+        <div
+          style={{ maxWidth: "95vw", overflow: "auto" }}
+          className={`bg-transparent border-0 text-base item flex flex-col ${
+            isTool
+              ? "p-0 mb-1 flex-row items-center gap-2 text-muted-foreground flex"
+              : "mb-2 p-1 gap-6"
+          }`}
+        >
+          {started && !isTransferToAgent && <SpinnerIcon />}
+          {(finished || isTransferToAgent) && <CheckmarkIcon />}
+          {isTool ? (
+            this.renderTool(this.props.response)
+          ) : isChart ? (
+            this.renderChart(this.props.response)
+          ) : isImage ? (
+            this.renderImage(this.props.response)
+          ) : isHtml ? null : (
+            <>
+              {this.props.nextItem && this.props.nextItem.html ? (
+                this.renderHtmlPage(this.props.nextItem.html.text)
+              ) : (
+                <Markdown remarkPlugins={[remarkGfm]}>
+                  {this.props.response.text.replace("[CHART_HERE]", "")}
+                </Markdown>
+              )}
+            </>
+          )}
+        </div>
+        {this.props.response.arguments &&
+          this.props.response.arguments.includes('"html":') &&
+          this.renderHtmlPage(parseJSON(this.props.response.arguments))}
+      </>
+    );
+  }
+
+  renderHtmlPage(
+    params: string | { html: string; title?: string; height?: number }
+  ) {
+    const html = typeof params === "string" ? params : params["html"];
+    const height = typeof params === "string" ? 768 : params["height"];
+    const title = typeof params === "string" ? "" : params["title"];
+    if (!html) {
+      return null;
+    }
+    return (
+      <Tabs defaultValue="preview" className="w-[400px]">
+        {title && <h2 className="text-lg font-bold pb-2 pt-1">{title}</h2>}
+
+        <TabsList>
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+          <TabsTrigger value="code">Code</TabsTrigger>
+          {this.state.errors.length > 0 && (
+            <TabsTrigger value="errors" style={{ color: "red" }}>
+              Errors
+            </TabsTrigger>
+          )}
+        </TabsList>
+        <TabsContent value="preview">
+          <HTMLPreview index={this.props.index} height={height} title={title}>
+            {html}
+          </HTMLPreview>
+        </TabsContent>
+        <TabsContent value="code">
+          <Textarea style={{ width: "1024px", maxHeight: "600px" }}>
+            {html.replace("```html", "").replace("```", "")}
+          </Textarea>
+        </TabsContent>
+        {this.state.errors.length > 0 && (
+          <TabsContent value="errors">
+            {Array.from(new Set(this.state.errors)).map((error, index) => (
+              <div key={index}>{error}</div>
+            ))}
+            <Button
+              variant="destructive"
+              className="mt-2"
+              onClick={() => {
+                if (this.props.onFixErrors) {
+                  this.props.onFixErrors(this.props.index, this.state.errors);
+                }
+              }}
+            >
+              Auto Fix Errors
+            </Button>
+          </TabsContent>
         )}
-      </div>
+      </Tabs>
     );
   }
 
@@ -184,16 +199,24 @@ export class ChatResponse extends Component<ChatResponseProps, State> {
       runtime,
       id: toolResponseId,
     } = response;
+    const isTransferToAgent = name?.includes("transfer_to");
     const argList = parseJSON(toolArguments || "{}");
     return (
       <div className="flex flex-row items-center gap-2">
         <div
-          className={"font-italic underline cursor-pointer"}
-          onClick={() => {
-            if (this.props.dispatch) {
-              this.props.dispatch(showToolResponse(toolResponseId || ""));
-            }
-          }}
+          className={
+            "font-italic" +
+            (isTransferToAgent ? "" : " underline cursor-pointer")
+          }
+          onClick={
+            isTransferToAgent
+              ? undefined
+              : () => {
+                  if (this.props.dispatch) {
+                    this.props.dispatch(showToolResponse(toolResponseId || ""));
+                  }
+                }
+          }
         >
           {name}
         </div>

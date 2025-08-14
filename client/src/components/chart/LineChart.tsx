@@ -35,7 +35,6 @@ export function ChartLineMultiple({
   yAxisKeys,
   yKey,
 }: ChartLineMultipleProps) {
-  console.log({ chartConfig, chartData, yAxisKeys, yKey });
   return (
     <div>
       <CardHeader>

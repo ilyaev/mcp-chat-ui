@@ -4,6 +4,7 @@ import {
   MCPServerStreamableHttp,
   OpenAIChatCompletionsModel,
   MCPServer,
+  tool,
 } from "@openai/agents";
 import OpenAI from "openai";
 import { AgentsHelper } from "./agents_helper";
@@ -11,6 +12,7 @@ import SystemPrompt from "../instructions/system_prompt";
 import codingAgentInstructions from "../instructions/coding_agent_instructions";
 import { now } from "./index";
 import { loadExternalMcpServers } from "./external_mcp";
+import z from "zod";
 
 const TOOL_RESPONSE_PURGE_THRESHOLD = 1024 * 3;
 
@@ -80,11 +82,38 @@ export class ChatSession {
     ),
 
     public codingAgent = new Agent({
-      model: modelFlash25,
+      model: modelFlash20,
       name: "Coding AI Agent",
       instructions: codingAgentInstructions,
+      modelSettings: {
+        toolChoice: "required",
+      },
       handoffDescription:
-        "Use this agent when you need to create a single HTML/JavaScript/CSS web page application based on user input. Or if you need to generate code snippets or assist with programming tasks. Or you need to demonstrate something visually and it can be done using HTML/CSS/JavaScript.",
+        "Use this agent when you need to create a single HTML/JavaScript/CSS web page application based on user input. Or if you need to generate code snippets or assist with programming tasks. Or you need to demonstrate something visually and it can be done using HTML/CSS/JavaScript. Or if user need to do complex calculations and it also can be done using HTML/CSS/JavaScript.",
+      tools: [
+        tool({
+          name: "html_page_code_preview",
+          description:
+            "Preview generated web page, show code and errors if any. Use this tool to preview the HTML, CSS, and JavaScript code for the web page as a single string parameter. Also include 'title' parameter with brief description of generated page.",
+          parameters: z.object({
+            html: z.string().describe("HTML code for the web page."),
+            title: z.string().describe("Title of the web page."),
+            height: z
+              .number()
+              .min(100)
+              .max(1000)
+              .describe(
+                "Height of the web page based on content, given that width is fixed and 1024 pixels"
+              ),
+          }),
+          async execute({ html, title }) {
+            return {
+              html,
+              title,
+            };
+          },
+        }),
+      ],
     }),
 
     public genericAgent = new Agent({
